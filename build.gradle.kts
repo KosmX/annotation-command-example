@@ -2,6 +2,7 @@ plugins {
 	id("fabric-loom") version "1.0-SNAPSHOT"
 	kotlin("jvm") version "1.7.20"
 	id("maven-publish")
+	id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 base.archivesName.set(project.properties["archives_base_name"] as String)
@@ -16,6 +17,10 @@ repositories {
 	// for more information about repositories.
 }
 
+configurations {
+	create("shadowCommon")
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft("com.mojang:minecraft:${project.properties["minecraft_version"]}")
@@ -25,6 +30,8 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${project.properties["fabric_version"]}")
 	modImplementation("net.fabricmc:fabric-language-kotlin:${project.properties["fabric_kotlin_version"]}")
+
+	"shadowCommon"(implementation("org.reflections:reflections:0.10.2")!!)
 
 	// Uncomment the following line to enable the deprecated Fabric API modules. 
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
@@ -60,6 +67,16 @@ tasks {
 		// if it is present.
 		// If you remove this line, sources will not be generated.
 		withSourcesJar()
+	}
+
+	shadowJar {
+		configurations = listOf(project.configurations["shadowCommon"])
+		archiveClassifier.set("dev")
+	}
+
+	remapJar {
+		inputFile.set(shadowJar.get().archiveFile)
+		dependsOn(shadowJar)
 	}
 
 	jar {
